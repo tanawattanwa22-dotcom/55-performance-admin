@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#09131f">
+<title>55 PERFORMANCE | ส่งมอบ & รับประกัน ESP32</title>
+<link rel="stylesheet" href="./style.css?v=1">
+<script src="../license-config.js"></script>
+<script src="./app.js?v=1" defer></script>
+</head>
+<body>
+<header class="top">
+ <div class="brand">
+  <span class="mark">55<span>P</span></span>
+  <div><strong>55 PERFORMANCE</strong><small>DELIVERY & WARRANTY CONTROL</small></div>
+ </div>
+ <div class="topnav"><a href="../" aria-label="กลับหน้าหลัก">หน้าแรก</a><button type="button" id="logout" hidden>ออกจากระบบ</button></div>
+</header>
+<main class="wrap">
+ <section id="login" class="surface auth">
+  <p class="eyebrow">OWNER ACCESS ONLY</p>
+  <h1>ส่งมอบสินค้า / เริ่มรับประกัน</h1>
+  <p class="sub">ระบบแยกจาก License และ ECU Flash บันทึกการเริ่มประกันเมื่อแอปของลูกค้าเชื่อมต่อ ESP32 สำเร็จครั้งแรกเท่านั้น</p>
+  <form id="loginForm" class="fields">
+   <label>อีเมลแอดมิน<input id="email" type="email" required autocomplete="username" placeholder="admin@example.com"></label>
+   <label>รหัสผ่าน<input id="password" type="password" required autocomplete="current-password"></label>
+   <button class="primary" type="submit">เข้าสู่ระบบจัดการประกัน</button>
+  </form>
+ </section>
+ <div id="workspace" hidden>
+  <div class="intro">
+   <div><p class="eyebrow">HARDWARE SERIAL REGISTRY</p><h1>ส่งมอบสินค้า & รับประกัน</h1><p class="sub">เริ่มนับจากครั้งแรกที่เชื่อมต่อกล่องจริงผ่านแอป · เวลาเซิร์ฟเวอร์ · วันเริ่มแก้ไม่ได้</p></div>
+   <button id="reload" type="button">รีเฟรชข้อมูล</button>
+  </div>
+  <div class="metrics">
+   <div class="metric"><small>ทั้งหมดในหน้านี้</small><strong id="statTotal">0</strong></div>
+   <div class="metric"><small>รอเปิดใช้งาน</small><strong id="statPending">0</strong></div>
+   <div class="metric"><small>อยู่ในประกัน</small><strong id="statActive">0</strong></div>
+   <div class="metric"><small>หมดประกัน</small><strong id="statExpired">0</strong></div>
+  </div>
+  <div class="panels">
+   <section class="surface register">
+    <div class="section-title"><p class="eyebrow">REGISTER DELIVERY</p><h2>ลงทะเบียนกล่องก่อนส่งลูกค้า</h2></div>
+    <form id="unitForm" class="fields">
+     <label>Bluetooth MAC ของ ESP32 <span class="required">จำเป็น</span><input id="mac" required maxlength="17" placeholder="AA:BB:CC:DD:EE:FF" autocapitalize="characters" spellcheck="false" autocomplete="off"></label>
+     <p class="hint">ดูได้จากหน้ารายละเอียดอุปกรณ์ที่จับคู่ใน Android หรือสติกเกอร์ที่ร้านบันทึกไว้ ระบบเก็บเฉพาะค่า Hash ไม่เก็บ MAC เต็ม</p>
+     <label>Serial / เลขอ้างอิงสินค้า<input id="serial" maxlength="48" placeholder="55P-000123" autocapitalize="characters"></label>
+     <label>สินค้า / รุ่น<input id="product" maxlength="100" value="55P Smart Gauge"></label>
+     <label>ชื่อลูกค้า<input id="buyer" maxlength="120" placeholder="ไม่บังคับ"></label>
+     <label>เบอร์ติดต่อ<input id="contact" maxlength="120" placeholder="ไม่บังคับ"></label>
+     <div class="twocol">
+       <label>วันที่ออกจากร้าน <span class="required">จำเป็น</span><input id="delivered" type="date" required></label>
+       <label>รับประกัน (เดือน) <span class="required">กำหนดเอง</span><input id="months" type="number" min="1" max="60" value="12" required></label>
+     </div>
+     <label>หมายเหตุ<textarea id="notes" maxlength="500" rows="2" placeholder="เช่น หมายเลขออเดอร์ / รุ่นที่ส่ง"></textarea></label>
+     <button id="save" class="primary" type="submit">บันทึกการส่งมอบ</button>
+    </form>
+    <p class="hint">การทดสอบที่ร้านก่อนลงทะเบียนไม่เริ่มรับประกัน · ต้องมีบัญชีแอปและ License ใช้งานได้เมื่อเชื่อมต่อจริงครั้งแรก</p>
+   </section>
+   <section class="surface records">
+    <div class="section-title"><p class="eyebrow">ACTIVATION RECORDS</p><h2>ลูกค้าเปิดใช้แล้วหรือยัง</h2></div>
+    <form id="searchForm" class="search">
+     <input id="search" type="search" maxlength="48" placeholder="ค้นหา Serial / MAC ท้าย 4 หลัก">
+     <button type="submit">ค้นหา</button>
+    </form>
+    <p class="hint">ข้อมูลเริ่มรับประกันมาจากเซิร์ฟเวอร์หลังเชื่อมต่อจริง ไม่ใช่วันที่ของโทรศัพท์</p>
+    <div id="records" class="cards"></div>
+    <div class="pagination"><button id="prev" type="button">ก่อนหน้า</button><span id="pageInfo"></span><button id="next" type="button">ถัดไป</button></div>
+   </section>
+  </div>
+ </div>
+ <p id="status" role="status" aria-live="polite"></p>
+</main>
+<dialog id="editDialog">
+ <form id="editForm" class="fields">
+  <p class="eyebrow">WARRANTY SETTINGS</p><h2>แก้ข้อมูลสินค้า / ระยะรับประกัน</h2>
+  <p class="hint">วันเริ่มรับประกันที่ถูกบันทึกแล้วแก้ไม่ได้ การเปลี่ยนระยะเดือนจะคำนวณวันสิ้นสุดใหม่โดยยึดวันเริ่มเดิม</p>
+  <input type="hidden" id="editId">
+  <label>Serial<input id="editSerial" maxlength="48"></label>
+  <label>ชื่อสินค้า<input id="editProduct" maxlength="100" required></label>
+  <label>ชื่อลูกค้า<input id="editBuyer" maxlength="120"></label>
+  <label>เบอร์ติดต่อ<input id="editContact" maxlength="120"></label>
+  <div class="twocol">
+   <label>วันที่ออกจากร้าน<input id="editDelivered" type="date" required></label>
+   <label>รับประกัน (เดือน)<input id="editMonths" type="number" min="1" max="60" required></label>
+  </div>
+  <label>หมายเหตุ<textarea id="editNotes" maxlength="500"></textarea></label>
+  <div class="actions"><button type="button" id="cancelEdit">ปิด</button><button type="submit" class="primary" id="saveEdit">บันทึกการแก้ไข</button></div>
+ </form>
+</dialog>
+</body></html>
