@@ -21,7 +21,7 @@
  <section id="login" class="surface auth">
   <p class="eyebrow">OWNER ACCESS ONLY</p>
   <h1>ส่งมอบสินค้า / เริ่มรับประกัน</h1>
-  <p class="sub">ระบบแยกจาก License และ ECU Flash บันทึกการเริ่มประกันเมื่อแอปของลูกค้าเชื่อมต่อ ESP32 สำเร็จครั้งแรกเท่านั้น</p>
+  <p class="sub">ระบบแยกจาก License และ ECU Flash · แอปแจ้งการเชื่อมต่อครั้งแรกเข้า Supabase เพื่อรอร้านตรวจสอบ จากนั้นแอดมินจึงอนุมัติวันเริ่มรับประกัน</p>
   <form id="loginForm" class="fields">
    <label>อีเมลแอดมิน<input id="email" type="email" required autocomplete="username" placeholder="admin@example.com"></label>
    <label>รหัสผ่าน<input id="password" type="password" required autocomplete="current-password"></label>
@@ -30,7 +30,7 @@
  </section>
  <div id="workspace" hidden>
   <div class="intro">
-   <div><p class="eyebrow">HARDWARE SERIAL REGISTRY</p><h1>ส่งมอบสินค้า & รับประกัน</h1><p class="sub">เริ่มนับจากครั้งแรกที่เชื่อมต่อกล่องจริงผ่านแอป · เวลาเซิร์ฟเวอร์ · วันเริ่มแก้ไม่ได้</p></div>
+   <div><p class="eyebrow">HARDWARE SERIAL REGISTRY</p><h1>ส่งมอบสินค้า & รับประกัน</h1><p class="sub">รับแจ้งการเชื่อมต่อจากแอป → รอแอดมินตรวจ Serial และหลักฐานรับสินค้า → นับจากเวลารับแจ้งครั้งแรก · วันเริ่มแก้ไม่ได้</p></div>
    <button id="reload" type="button">รีเฟรชข้อมูล</button>
   </div>
   <div class="metrics">
@@ -56,7 +56,7 @@
      <label>หมายเหตุ<textarea id="notes" maxlength="500" rows="2" placeholder="เช่น หมายเลขออเดอร์ / รุ่นที่ส่ง"></textarea></label>
      <button id="save" class="primary" type="submit">บันทึกการส่งมอบ</button>
     </form>
-    <p class="hint">การทดสอบที่ร้านก่อนลงทะเบียนไม่เริ่มรับประกัน · ต้องมีบัญชีแอปและ License ใช้งานได้เมื่อเชื่อมต่อจริงครั้งแรก</p>
+    <p class="hint">การทดสอบที่ร้านก่อนลงทะเบียนไม่เริ่มรับประกัน · ลูกค้าต้องมีบัญชีแอปและ License ใช้งานได้ และร้านต้องตรวจยืนยันก่อนเริ่มนับ</p>
    </section>
    <section class="surface records">
     <div class="section-title"><p class="eyebrow">ACTIVATION RECORDS</p><h2>ลูกค้าเปิดใช้แล้วหรือยัง</h2></div>
@@ -64,7 +64,7 @@
      <input id="search" type="search" maxlength="48" placeholder="ค้นหา Serial / MAC ท้าย 4 หลัก">
      <button type="submit">ค้นหา</button>
     </form>
-    <p class="hint">ข้อมูลเริ่มรับประกันมาจากเซิร์ฟเวอร์หลังเชื่อมต่อจริง ไม่ใช่วันที่ของโทรศัพท์</p>
+    <p class="hint">รายงานจากแอปยังไม่ใช่หลักฐานเข้ารหัสของกล่องจริง ต้องตรวจใบส่งมอบและ Serial ก่อนอนุมัติ วันเวลาเริ่มเป็นเวลาที่เซิร์ฟเวอร์ได้รับรายงาน</p>
     <div id="records" class="cards"></div>
     <div class="pagination"><button id="prev" type="button">ก่อนหน้า</button><span id="pageInfo"></span><button id="next" type="button">ถัดไป</button></div>
    </section>
