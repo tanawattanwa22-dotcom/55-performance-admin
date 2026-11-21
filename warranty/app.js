@@ -35,6 +35,8 @@ const show=(ok)=>{
  if(!ok)$('records').replaceChildren();
 };
 function statusOf(r){
+ if(!r.activated_at&&r.connection_report?.review_state==='pending')
+   return {value:'รอแอดมินตรวจสอบ',className:'pending'};
  if(!r.activated_at)return {value:'ยังไม่เปิดใช้',className:'pending'};
  if(new Date(r.expires_at)<new Date())return {value:'หมดประกัน',className:'expired'};
  return {value:'กำลังรับประกัน',className:''};
@@ -49,6 +51,8 @@ function lines(r){
   ['ระยะรับประกัน',r.warranty_months+' เดือน'],
   ['ลูกค้า',r.customer_name||'—'],
   ['ติดต่อ',r.customer_contact||'—'],
+  ['เวลาที่แอปรายงานครั้งแรก (ยังไม่ใช่หลักฐานกล่องจริง)',when(r.connection_report?.first_reported_at)],
+  ['จำนวนรายงานจากแอป',String(r.connection_report?.report_count||0)+' ครั้ง'],
   ['เชื่อมต่อล่าสุด',when(r.last_connected_at)],
   ['เชื่อมต่อสำเร็จ',r.connection_count+' ครั้ง']
  ];
@@ -60,7 +64,7 @@ function receipt(r){
   'Serial: '+(r.serial_number||'—'),
   'วันที่ออกจากร้าน: '+iso(r.delivered_on),
   'ระยะประกัน: '+r.warranty_months+' เดือน',
-  'วันเริ่มประกัน: '+(r.activated_at?when(r.activated_at):'รอเชื่อมต่อผ่านแอปครั้งแรก'),
+  'วันเริ่มประกัน: '+(r.activated_at?when(r.activated_at):(r.connection_report?.review_state==='pending'?'รอแอดมินตรวจสอบรายงานจากแอป':'รอเชื่อมต่อผ่านแอปครั้งแรก')),
   'วันหมดประกัน: '+when(r.expires_at),
   'สถานะ: '+statusOf(r).value,
   'ลูกค้า: '+(r.customer_name||'—')
@@ -79,7 +83,29 @@ function rowCard(r){
  edit.onclick=()=>editUnit(r);
  copy.onclick=async()=>{try{await navigator.clipboard.writeText(receipt(r));tell('คัดลอกใบส่งมอบแล้ว')}
  catch{tell('คัดลอกไม่ได้ กรุณาใช้ Chrome บน HTTPS',false)}};
- buttons.append(edit,copy);c.append(head,product,dl,buttons);return c;
+ buttons.append(edit,copy);
+  if(!r.activated_at&&r.connection_report?.review_state==='pending'){
+    const approve=el('button','ตรวจใบส่งมอบแล้ว · อนุมัติเริ่มประกัน');
+    approve.type='button';
+    approve.onclick=async()=>{
+      if(!r.serial_number){tell('ต้องใส่ Serial ของสินค้าก่อน จึงจะอนุมัติได้',false);return}
+      const verified=window.prompt(
+        'คำขอจากแอปยังไม่ใช่หลักฐานจาก ESP32 ที่เข้ารหัส\\nตรวจหลักฐานรับสินค้าและตัวเครื่องก่อน\\nพิมพ์ Serial เพื่อยืนยัน:', '');
+      if(verified===null)return;
+      if(verified.trim().toUpperCase()!==r.serial_number.toUpperCase()){
+        tell('Serial ไม่ตรง ไม่อนุมัติ',false);return
+      }
+      if(!window.confirm('ตรวจใบส่งมอบและสินค้าตัวจริงแล้วใช่ไหม?\\nจะนับประกันจากเวลาที่เซิร์ฟเวอร์รับรายงานแรก ไม่สามารถเปลี่ยนวันเริ่มได้'))return;
+      approve.disabled=true;
+      try{
+        const response=await api('admin-approve-first',{id:r.id,confirm_serial:verified.trim(),confirm_ownership:true});
+        await load();tell('อนุมัติประกันสำเร็จ · เริ่ม '+when(response.activated_at)+' · หมด '+when(response.expires_at));
+      }catch(e){tell(e.message||String(e),false)}
+      finally{approve.disabled=false}
+    };
+    buttons.append(approve);
+  }
+  c.append(head,product,dl,buttons);return c;
 }
 async function load(){
  if(state.loading)return;
