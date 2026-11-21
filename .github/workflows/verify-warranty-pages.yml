@@ -1,0 +1,48 @@
+name: Warranty Pages - verify real rendered HTML
+on:
+  push:
+    branches: [main]
+    paths:
+      - "warranty/**"
+      - ".github/workflows/verify-warranty-pages.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-static-site:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check source structure and public-only keys
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s warranty/index.html
+          test -s warranty/app.js
+          test -s warranty/style.css
+          grep -q '<!DOCTYPE html>' warranty/index.html
+          grep -q 'src="../license-config.js"' warranty/index.html
+          node --check warranty/app.js
+          ! grep -R -E 'SUPABASE_SERVICE_ROLE_KEY|sb_secret_' warranty
+      - name: Verify deployed Pages response renders HTML, JavaScript and CSS
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://tanawattanwa22-dotcom.github.io/55-performance-admin/warranty/"
+          ok=0
+          for attempt in $(seq 1 18); do
+            status="$(curl -L -sS -o "$RUNNER_TEMP/warranty.html" -w '%{http_code}' --max-time 15 "$base" || true)"
+            head="$(curl -L -sS -I --max-time 15 "$base" || true)"
+            if [[ "$status" == 200 ]] && echo "$head" | grep -qi '^content-type: text/html' &&
+               grep -q 'id="unitForm"' "$RUNNER_TEMP/warranty.html"; then
+              ok=1; break
+            fi
+            echo "Attempt $attempt: URL status $status; waiting for GitHub Pages publish"
+            sleep 10
+          done
+          test "$ok" = 1
+          for file in app.js style.css ../license-config.js; do
+            curl -fsSL --max-time 15 -o /dev/null "$base$file"
+          done
+          echo "PASS: warranty admin publicly serves proper HTML with referenced JS/CSS; customer data remains API protected"
