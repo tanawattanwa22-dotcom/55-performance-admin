@@ -65,6 +65,15 @@ export function mountCommerce(root,rpc,{admin=false,isBusy=()=>false,confirmActi
       const staged=await uploadAsset(p.id,input.files[0]);
       status.textContent='อัปโหลดแบบร่างแล้ว · SHA-256 '+staged.sha256+' · ยังไม่เผยแพร่';
      })));
+     const bin=el('input'),xdf=el('input');bin.type=xdf.type='file';bin.accept='.bin';xdf.accept='.xdf';
+     const bl=el('label','เลือกไฟล์ BIN'),xl=el('label','เลือกไฟล์ XDF');bl.append(bin);xl.append(xdf);
+     r.append(bl,xl,btn('ตรวจและอัปโหลด BIN + XDF',()=>void action(async()=>{
+      if(!bin.files?.[0]||!xdf.files?.[0])throw Error('กรุณาเลือก BIN และ XDF');
+      const {buildMarketPack}=await import('./market-pack-builder.mjs');
+      const pack=await buildMarketPack(p,bin.files[0],xdf.files[0]);
+      const result=await uploadAsset(p.id,pack);
+      status.textContent='Supabase รับไฟล์แบบร่างแล้ว • SHA-256 '+result.sha256+' • ตรวจความถูกต้องก่อนเผยแพร่';
+     })));
      r.append(btn('เผยแพร่สินค้าที่ตรวจแล้ว',()=>void action(async()=>{if(confirmAction('ยืนยันว่าได้ตรวจ BIN/XDF และสิทธิ์จำหน่ายแล้ว?'))await rpc('delivery_admin_publish',{id:p.id});})));
     }
    }
