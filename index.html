@@ -45,6 +45,7 @@ function card(v){
  field('คีย์เต็ม',v.license_key?el('code',v.license_key):el('span','คีย์เก่า • ไม่มีเลขเต็มในระบบ','muted'));
  field('ไอดีลูกค้า',v.customer_login||(!v.bound_user_id?'ยังไม่ผูกบัญชี':v.customer_lookup_failed?'โหลดไอดีไม่สำเร็จ • ลองรีเฟรช':'ไม่พบไอดีล็อกอิน'));
  field('เปิดใช้',date(v.activated_at));field('หมดอายุ',date(v.expires_at));
+ field('ระดับ',String(v.commerce_tier||'pro').toUpperCase());
  field('ราคา',prices.format(Number(v.price_baht)||0)+' บาท');
  c.append(info);
  const controls=el('div',null,'license-tools');
@@ -99,8 +100,8 @@ const uploadAsset=async(id,file)=>{
 };
 const tierButton=document.getElementById('createTierKey'),tierResult=document.getElementById('tierKeyResult');
 async function refreshRelease(){
- const r=await rpc('release_status');tierButton.disabled=!r.license_checkout;
- tierResult.textContent=r.license_checkout?'ระบบออก Key พร้อม':'ระบบออก Key แบบแบ่งระดับยังปิดอยู่';
+ const r=await rpc('release_status');tierButton.disabled=!(r.license_checkout||r.license_admin_issue);
+ tierResult.textContent=r.license_checkout?'ระบบออก Key พร้อม':r.license_admin_issue?'แอดมินออก Key ทดสอบได้ · ยังปิดการซื้อของลูกค้า':'ระบบออก Key แบบแบ่งระดับยังปิดอยู่';
 }
 tierButton.onclick=async()=>{
  if(tierButton.disabled||document.getElementById('panel').hidden)return;
