@@ -22,7 +22,7 @@ body{padding:clamp(10px,3vw,22px)}button{cursor:pointer}button:disabled{opacity:
 <label for="reportOutcome">ผล</label><select id="reportOutcome"><option value="">ทุกสถานะ</option><option value="usb_detached">พบ USB หลุด (รวมหลัง ACK)</option><option value="ecu_timeout">ECU ไม่ตอบ</option><option value="final_ack">Final ACK</option><option value="stopped">หยุด</option><option value="unknown">ไม่ทราบผล</option><option value="cancelled">ยกเลิก</option></select>
 <button id="reportFind" type="submit">ค้นหา / รีเฟรช</button>
 </form><p id="reportStatus" role="status" aria-live="polite"></p><div id="reportList"></div><button id="reportMore" type="button" hidden>ดูรายงานเพิ่มเติม</button>
-</details></section><section><h3>สร้าง License Key</h3><label>อายุคีย์ (วัน) <input id="days" type="number" min="1" max="3650" value="30"></label><label>ราคา (บาท) <input id="price" type="number" min="0" value="500"></label><button id="create">สร้างคีย์ 1 เครื่อง</button><pre id="newkey"></pre><small>คีย์ใหม่จะแสดงในรายการสำหรับแอดมิน และคัดลอกได้ภายหลัง</small></section><section id="license-list"><div class="license-tools"><h3>รายการ License Key</h3><button id="refresh">รีเฟรช</button></div>
+</details></section><section><h3>สร้าง License Key</h3><label>อายุคีย์ (วัน) <input id="days" type="number" min="1" max="3650" value="30"></label><label>ราคา (บาท) <input id="price" type="number" min="0" value="500"></label><button id="create">สร้างคีย์ 1 เครื่อง (ระบบเดิม)</button><pre id="newkey"></pre><hr><label>ระดับ License ใหม่ <select id="newKeyTier"><option value="standard">STANDARD 790 บาท</option><option value="pro">PRO 1,500 บาท</option></select></label><button id="createTierKey" type="button" disabled>สร้าง Key ตามระดับ</button><pre id="tierKeyResult" role="status">เปิดเมนูร้านเพื่อโหลดสถานะการขาย</pre><small>คีย์ใหม่จะแสดงในรายการสำหรับแอดมิน และคัดลอกได้ภายหลัง</small></section><section id="license-list"><div class="license-tools"><h3>รายการ License Key</h3><button id="refresh">รีเฟรช</button></div>
 <small>แสดงคีย์เต็มและไอดีที่ใช้ล็อกอินของบัญชีที่ผูกกับคีย์ เฉพาะแอดมิน</small>
 <div id="list"></div><nav id="paging" aria-label="หน้ารายการคีย์" hidden><button id="prev">ก่อนหน้า</button><small id="page-label"></small><button id="next">ถัดไป</button></nav></section><section id="commerceAdminSection"><h3>FORGE55 • MARKET / SELLER</h3><p><small>จัดการร้านไฟล์และคำสั่งซื้อผ่าน Supabase บัญชีแอดมินเดิม</small></p><button type="button" id="commerceAdminOpen">เปิดหน้าจัดการร้าน</button><div id="commerceAdminHost"></div></section></main><pre id="status"></pre><script src="license-config.js"></script><script src="license-client.js"></script><script>
 function msg(x){$('status').textContent=x?.message||String(x)}
@@ -97,9 +97,25 @@ const uploadAsset=async(id,file)=>{
  const response=await fetch(cfg.url+'/functions/v1/ecu-official-market-candidate?action=upload',{method:'POST',cache:'no-store',headers:{apikey:cfg.anonKey,Authorization:'Bearer '+jwt,'x-product-id':id,'Content-Type':'application/zip'},body:file});
  const j=await response.json().catch(()=>({}));if(!response.ok)throw Error(j.error||'อัปโหลดไม่สำเร็จ');return j;
 };
+const tierButton=document.getElementById('createTierKey'),tierResult=document.getElementById('tierKeyResult');
+async function refreshRelease(){
+ const r=await rpc('release_status');tierButton.disabled=!r.license_checkout;
+ tierResult.textContent=r.license_checkout?'ระบบออก Key พร้อม':'ระบบออก Key แบบแบ่งระดับยังปิดอยู่';
+}
+tierButton.onclick=async()=>{
+ if(tierButton.disabled||document.getElementById('panel').hidden)return;
+ const tier=document.getElementById('newKeyTier').value,days=Number(document.getElementById('days').value);
+ if(!Number.isInteger(days)||days<1||days>3650){tierResult.textContent='ระบุอายุ License 1–3650 วัน';return;}
+ if(!confirm('สร้าง Key '+tier.toUpperCase()+' อายุ '+days+' วัน?'))return;
+ tierButton.disabled=true;
+ try{const j=await rpc('retail_admin_create_key',{tier,days});tierResult.textContent=j.tier.toUpperCase()+' : '+j.key;await refresh();}
+ catch(e){tierResult.textContent=e.message;}
+ finally{tierButton.disabled=false;}
+};
 let dispose=null;
 document.getElementById('commerceAdminOpen').onclick=()=>{
  if(document.getElementById('panel').hidden)return;
+ void refreshRelease().catch(e=>{tierButton.disabled=true;tierResult.textContent=e.message;});
  dispose?.();dispose=mountCommerce(document.getElementById('commerceAdminHost'),rpc,{admin:true,enableFulfillment:true,uploadAsset});
 };
 </script></html>
