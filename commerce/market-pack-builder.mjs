@@ -23,7 +23,7 @@ export async function buildMarketPack(product,binFile,xdfFile){
  if(/<!DOCTYPE|<!ENTITY/i.test(xml))throw Error('XDF XML ไม่รองรับ');
  const doc=new DOMParser().parseFromString(xml,'application/xml');
  if(doc.querySelector('parsererror')||doc.documentElement?.localName!=='XDFFORMAT')throw Error('XDF ไม่ใช่ XML ที่รองรับ');
- const count=doc.getElementsByTagName('XDFTABLE').length;
+ const count=Array.from(doc.getElementsByTagName('XDFTABLE')).filter(t=>Array.from(t.children).some(a=>a.tagName==='XDFAXIS'&&a.getAttribute('id')==='z'&&Array.from(a.children).some(e=>e.tagName==='EMBEDDEDDATA'))).length;
  if(count<1||count>2000)throw Error('จำนวนตาราง XDF ไม่รองรับ');
  const id=part+'_'+year.replace('–','-'),bp='PAIRS/'+id+'/firmware.bin',xp='PAIRS/'+id+'/definition.xdf';
  const manifest={schema:1,pairs:[{id,part_code:part,year,model,bin_path:bp,xdf_path:xp,bin_size:bin.length,bin_sha256:await sha(bin),xdf_sha256:await sha(xdf),xdf_tables:count}]};
